@@ -77,7 +77,6 @@ const extractFile = (input, output, opts) => runPlugins(input, opts).then(files 
 		const dest = path.join(output, x.path);
 		const mode = x.mode & ~process.umask();
 		const now = new Date();
-		console.log("DECOMPRESS", x);
 		if (x.type === 'directory') {
 			return makeDir(output)
 				.then(outputPath => fsP.realpath(outputPath))
@@ -121,9 +120,14 @@ const extractFile = (input, output, opts) => runPlugins(input, opts).then(files 
 					return fsP.symlink(x.linkname, dest);
 				}
 
-				return fsP.writeFile(dest, x.data, { mode });
+				return fsP.writeFile(dest, x.data, { mode })
 			})
 			.then(() => x.type === 'file' && fsP.utimes(dest, now, x.mtime))
+			.then(() => {
+				if (typeof opts.callBack === 'function') {
+					opts.callBack(x)
+				}
+			})
 			.then(() => x);
 	}));
 });
